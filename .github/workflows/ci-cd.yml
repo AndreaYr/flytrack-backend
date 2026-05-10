@@ -1,0 +1,59 @@
+name: FlyTrack Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Etapa 1: Pruebas ───────────────────────────────────────────
+  test:
+    name: Pruebas Unitarias
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ejecutar pruebas con cobertura
+        run: npm test
+
+  # ─── Etapa 2: Build Docker ──────────────────────────────────────
+  build:
+    name: Construir imagen Docker
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Construir imagen Docker
+        run: docker build -t flytrack-backend:${{ github.sha }} .
+
+      - name: Verificar imagen creada
+        run: docker images flytrack-backend
+
+  # ─── Etapa 3: Deploy (simulado) ─────────────────────────────────
+  deploy:
+    name: Despliegue a Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Simular despliegue a staging
+        run: |
+          echo "Desplegando flytrack-backend versión ${{ github.sha }}..."
+          echo "Entorno: staging"
+          echo "Estado: Despliegue completado exitosamente"
